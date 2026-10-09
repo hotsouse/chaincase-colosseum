@@ -1,181 +1,208 @@
+<div align="center">
+
+<img src="public/favicon.svg" alt="ChainCase logo" width="145" />
+
 # ChainCase
 
-**Investigate disputed Solana payments without moving funds.**
+### Solana Payment Dispute Investigation
 
-ChainCase compares an observed finalized SPL-token transfer with an expected payment and with user-supplied merchant/payment-provider records. It identifies mismatches and exports a transparent investigation report. The system is a **read-only hackathon MVP**, not a payment processor or settlement certificate.
+**The blockchain says paid. The merchant says failed. Who resolves the discrepancy?**
 
-> **Status:** working local MVP (October 2026). No third-party provider integration or public deployment is claimed. Live public-RPC verification requires internet access from the host and a valid Solana transaction.
+Verify onchain facts · Investigate conflicting payment records · Export evidence
 
-## Why this exists
+![Solana](https://img.shields.io/badge/Solana-Devnet%20%2B%20Mainnet-7957D5?style=flat-square) ![Node.js](https://img.shields.io/badge/Node.js-20.11%2B-43853D?style=flat-square) ![License](https://img.shields.io/badge/License-MIT-2563EB?style=flat-square) ![Colosseum](https://img.shields.io/badge/Colosseum-2026-475569?style=flat-square) ![Status](https://img.shields.io/badge/Status-Hackathon%20MVP-E88736?style=flat-square)
 
-A transaction can be finalized on Solana while a merchant's internal order system or payment provider says FAILED or PENDING. The right investigation checks the chain, then explains exactly which independent facts can be established—and which require a payment provider's own records. A transaction to a processor-controlled token account is **not proof that a merchant has been credited**.
+[Why ChainCase](#the-problem) · [Live Proof](#real-devnet-proof) · [Features](#what-chaincase-does) · [Quick Start](#quick-start) · [Architecture](#architecture) · [Security](#security--limitations)
 
-### P0 capabilities
+</div>
 
-- Input order ID, merchant, transaction signature, expected recipient **token account**, token mint, amount and Solana cluster.
-- Server-side Solana JSON-RPC `getTransaction` at `finalized`; `getSignatureStatuses` for non-finalized/unknown signatures.
-- Exact raw-token-unit amounts using `BigInt`, parsed SPL `transfer` and `transferChecked` instructions (including inner instructions where parsed).
-- Validate destination token account, mint and amount. Never equate a submitted signature with successful settlement.
-- Compare merchant and provider statuses as **unverified third-party claims**.
-- Flag amount mismatches, token mismatches, signatures shared between locally saved cases, finalized execution failures and contradictory statuses.
-- Import a small CSV of order statuses (header `order_id,merchant_status,provider_status`).
-- Persist cases only in the browser and export reproducible JSON/printable investigation reports.
-- Three demo scenarios are possible in the codebase; the UI sample is **explicitly simulated** and not a real payment.
-- Responsive dashboard, empty states, error messages, health endpoint and automated tests.
+---
 
-## Start in 3 steps
+> **Colosseum Crypto World's Fair 2026 · Payments & Remittance**  
+> ChainCase is an early-stage, **read-only investigation MVP**. It is **not** a payment gateway, custody service, provider integration, settlement certificate, or production-ready financial system.
 
-Requirements: **Node.js 22** (or a current Node.js version >=20.11). npm comes with Node. No `npm install` is needed to run the app; it has zero runtime dependencies.
+## The problem
 
-**Windows PowerShell** after extracting the ZIP:
+**A successful blockchain transfer does not guarantee that every business system records the payment consistently.**
 
-```powershell
-cd "$env:USERPROFILE\Downloads\chaincase"
-node --version
-npm start
+Imagine a customer transfers tokens to the expected Solana token account, but the merchant's order system reports **FAILED**, while a payment provider's record reports **PAID**. The blockchain can establish whether a matching transfer occurred. It cannot, by itself, prove that a provider credited the merchant or that an order should be fulfilled.
+
+Operations teams need to distinguish **independently verifiable onchain facts** from **external claims**, identify what disagrees, and document the next steps without guessing.
+
+## The solution
+
+**ChainCase turns a disputed Solana payment into a structured, evidence-based investigation.**
+
+1. **Verify:** Inspect a real transaction through server-side Solana RPC.
+2. **Compare:** Match the expected token mint, recipient **SPL token account**, and exact amount against the observed transfer.
+3. **Reconcile:** Compare blockchain evidence with merchant/provider statuses supplied by a user or CSV/JSON import.
+4. **Explain:** Flag mismatches and distinguish proven facts from unauthenticated external records.
+5. **Export:** Generate a reproducible investigation package and printable evidence report.
+
+## See ChainCase in action
+
+![ChainCase investigation: verified Solana transfer and conflicting merchant/provider statuses](assets/chaincase-investigation.png)
+
+*Actual ChainCase interface. The blockchain transfer was checked using live Devnet RPC; the merchant FAILED and provider PAID statuses were **manually supplied for demonstration**, not obtained from connected payment providers.*
+
+| Resource | Link |
+| :-- | :-- |
+| **Verified Devnet transaction** | [View in Solana Explorer](https://explorer.solana.com/tx/2KY1P44tBb7SPaCWuZcYHMbPfyzs4yNFsfRgEq83Ma7Tz7jVks6XNYmeh7NyBKgdRkrpX8nbMv4ScsokHEmsRcVe?cluster=devnet) |
+| **Live application** | Coming soon — deployment in progress |
+| **Product demo video** | Coming soon |
+| **Pitch video** | Coming soon |
+| **Source code** | [hotsouse/chaincase-colosseum](https://github.com/hotsouse/chaincase-colosseum) |
+
+## Real Devnet proof
+
+A real, finalized SPL-token transaction was successfully verified in the ChainCase interface.
+
+| Field | Verified demo value |
+| :-- | :-- |
+| Network | `devnet` |
+| Order | `ORDER-001` |
+| Expected amount | **5 test tokens** |
+| Matching onchain amount | **5 test tokens** |
+| Matching transfers | **1** |
+| Finality | `FINALIZED_SUCCESS` |
+| Verification source | **Live Solana RPC** |
+| Merchant-reported status | `FAILED` — **manually modified** |
+| Provider-reported status | `PAID` — **manually modified** |
+| Finding | **Offchain status conflict** |
+
+**Transaction signature:**
+
+```text
+2KY1P44tBb7SPaCWuZcYHMbPfyzs4yNFsfRgEq83Ma7Tz7jVks6XNYmeh7NyBKgdRkrpX8nbMv4ScsokHEmsRcVe
 ```
 
-**Ubuntu / WSL** after extracting the ZIP inside your home directory:
+**Token mint:** `F5PfVvib1Skj7LZqNPP5ZWirdq4jaaG2Fz4fr37NVquq`  
+**Recipient SPL token account:** `EqDkFinfZDw9VNNwZ3PhZjKGQXS8mgbqRJ4oZxCiXiB5`
+
+> **Evidence boundary:** The live blockchain transfer is verifiable. The merchant and provider statuses in this scenario were manually entered; ChainCase does **not** independently authenticate them or establish provider settlement.
+
+## What ChainCase does
+
+| Capability | MVP implementation |
+| :-- | :-- |
+| Live blockchain verification | Solana JSON-RPC, `getTransaction` at `finalized` |
+| Finality checks | `getSignatureStatuses` when needed |
+| SPL transfer inspection | Parsed `transfer` / `transferChecked`, including parsed inner instructions |
+| Exact token amounts | Raw-unit arithmetic using JavaScript `BigInt` |
+| Expected vs. observed comparison | Mint, destination SPL token account, exact amount |
+| Offchain reconciliation | Manually entered/imported merchant and provider statuses |
+| Evidence provenance | Separates RPC-derived facts from external claims |
+| Reports | JSON investigation package and printable report |
+| Case history | Browser-local storage, no shared server database |
+| Tests | Automated unit/API/mocked-RPC and smoke tests |
+
+### Investigation outcomes
+
+The analyzer distinguishes aligned external records, missing or contradictory external statuses, onchain mismatches, failed execution, transactions awaiting finality, and inconclusive RPC evidence. **An unavailable transaction is not automatically classified as a failed payment.**
+
+## Quick start
+
+**Requirements:** Node.js **20.11+** (Node.js 22 recommended), npm. The current MVP has no runtime package dependencies.
 
 ```bash
-cd ~/chaincase
-node --version
+git clone https://github.com/hotsouse/chaincase-colosseum.git
+cd chaincase-colosseum
 npm start
 ```
 
-Open **http://localhost:3000** in a browser.
+Open **http://localhost:3000**.
 
-Expected terminal output:
-
-```
-ChainCase ready at http://localhost:3000
-```
-
-**Check everything locally:**
+**Run checks:**
 
 ```bash
 npm test
 npm run smoke
 ```
 
-Expected: all tests pass; the smoke script prints `OK` for the frontend assets, `/api/health`, and rejects invalid transaction input. Tests use **synthetic test fixtures and a mocked RPC**, not actual token payments.
+The automated tests use synthetic fixtures and mocked RPC responses; they do **not** independently establish live-network verification.
 
-### If the server does not start
+### Investigate a real transfer
 
-- `node: command not found`: install Node 22 LTS from https://nodejs.org/ (Windows) or use nvm in Ubuntu.
-- `EADDRINUSE`: port 3000 is occupied. On macOS/Linux/WSL: `PORT=3001 npm start`; in PowerShell: `$env:PORT=3001; npm start`.
-- Site loads but verifying a transaction fails: ensure outbound HTTPS can reach `https://api.devnet.solana.com`. Public endpoints can enforce rate limits, return old-history gaps or temporarily reject requests.
-- A transfer to a wallet owner address is not automatically a transfer to its SPL token account. Use the actual recipient token account address.
-- No uploaded CSV? Header must match precisely, and one row must have the same order ID as the case.
-- Cases disappear after clearing browser data: persistence is local-only. Export your JSON first.
+1. Select **New case**.
+2. Enter the order ID, merchant, transaction signature, network, expected SPL token mint, expected recipient **token account**, and amount.
+3. Provide merchant/provider statuses, or select **Unknown**.
+4. Select **Create & verify**.
+5. Review **Investigation**, **Evidence & reconciliation**, and **Report & export**.
+6. Export the JSON investigation package or print the report to PDF.
 
-## Use a real transaction
+To explore without a transaction, use **Explore sample case**. Samples are explicitly marked **SIMULATION**.
 
-1. Click **New case**.
-2. Enter the expected **SPL recipient token account** (not the wallet owner), token mint, decimal amount and transaction signature.
-3. Select **devnet** to begin with test assets. Use a known, finalized SPL-token transfer. A SOL-only transfer will not match.
-4. Enter the separately observed merchant and provider statuses—or set them to Unknown.
-5. Click **Create & verify**.
-6. Inspect **Investigation** for findings, **Evidence & reconciliation** for provenance or CSV import, and **Report & export** to download a JSON investigation package or print to PDF.
-
-To explore the workflow without a real Solana transaction, click **Explore sample case**. Every example is marked **SIMULATION**.
-
-### CSV template
+**Example CSV:**
 
 ```csv
 order_id,merchant_status,provider_status
-INV-2026-041,FAILED,PAID
+ORDER-001,FAILED,PAID
 ```
 
-The input statuses are manual statements. ChainCase does not authenticate webhook signatures or attest to third-party ledger integrity.
+The external statuses remain user-supplied claims even when imported from a file.
 
 ## Architecture
 
 ```text
-Browser (responsive SPA, HTML/CSS/ES modules)
- ├─ User form, cases and reports
- ├─ localStorage (local-only case history)
- ├─ deterministic analyzer (public/engine.js)
- └─ POST /api/verify
-       │
-       ▼
-Native Node HTTP server (server/index.js)
- ├─ Input validation and request size/rate limits
- ├─ Fixed server-side RPC endpoint allowlist (devnet/mainnet-beta)
- └─ Solana RPC (server/rpc.js)
-       ├─ getTransaction (finalized, jsonParsed)
-       └─ getSignatureStatuses (when not returned)
+Browser (HTML / CSS / ES modules)
+  ├── Investigation UI and local case history (localStorage)
+  ├── Deterministic reconciliation engine
+  ├── JSON / printable reports and CSV import
+  └── POST /api/verify
+          │
+          ▼
+Native Node.js HTTP server
+  ├── Input validation, request limits and RPC allowlist
+  └── Solana JSON-RPC
+        ├── getTransaction (finalized, jsonParsed)
+        └── getSignatureStatuses (fallback)
 ```
 
-**Why no Anchor smart contract?** The product does not move funds or enforce a payment. It needs independent historical chain verification, which is available through the existing Solana ledger. Creating a program would add attack surface without product value.
+**Why no smart contract?** ChainCase does not move funds or enforce payments. It verifies historical onchain evidence through the existing Solana ledger. An additional program is not necessary for this read-only MVP.
 
-**Why no backend DB?** Scope: anonymous, solo-user hackathon demo. localStorage lets the user investigate and export locally without sign-in. Production must add authenticated multi-tenant storage, encrypted data controls and signed provider integrations.
+**Why browser-local storage?** It keeps the hackathon demo simple and requires no account. It is not appropriate for confidential production investigations or multi-user case management.
 
-**Why Solana is relevant:** Solana provides a publicly verifiable transaction state and SPL token transfers. An ordinary private database cannot independently prove those facts. The offchain status comparisons do not inherently require blockchain.
+### API
 
-### Evidence states
-
-| Classification | Interpretation |
-|---|---|
-| `RECORDS_ALIGNED` | Finalized matching transfer and both externally supplied statuses are PAID; third-party records not authenticated |
-| `NEEDS_PROVIDER_REVIEW` | Finalized matching transfer, but at least one offchain status failed or pending |
-| `MISMATCH` | Parsed transfer does not match mint, token account or expected raw amount |
-| `ONCHAIN_VERIFIED` | Matching transfer, merchant/provider outcome not established |
-| `ONCHAIN_FAILED` | Transaction finalized but execution failed |
-| `AWAITING_FINALITY` | Signature found but not yet finalized |
-| `INCONCLUSIVE` | Missing, stale or unavailable evidence; never assume the transaction failed |
-
-## Files
-
-```text
-chaincase/
-├── public/
-│   ├── index.html       Responsive app shell
-│   ├── app.js           UX flows, local case storage, imports and exports
-│   ├── engine.js        Deterministic classification and report generation
-│   ├── csv.js           CSV parser
-│   ├── style.css        Responsive visual system
-│   └── favicon.svg
-├── server/
-│   ├── index.js         HTTP server and REST routes
-│   └── rpc.js           Solana RPC and SPL instruction parsing
-├── tests/               Unit, API, mocked-RPC integration, bootstrap, smoke tests
-├── docs/
-│   ├── SECURITY.md
-│   ├── DEPLOYMENT.md
-│   ├── DEMO_AND_PITCH.md
-│   └── SUBMISSION_AUDIT.md
-├── .github/workflows/ci.yml
-├── Dockerfile
-├── .env.example
-├── package-lock.json
-└── LICENSE
-```
-
-## API contract
-
-`GET /api/health` → `200` JSON health report.
-
-`POST /api/verify`
+`GET /api/health` — health response.  
+`POST /api/verify` — verify a Solana transaction:
 
 ```json
-{"network":"devnet","signature":"<a genuine 64-byte base58 Solana signature>"}
+{
+  "network": "devnet",
+  "signature": "<valid Solana transaction signature>"
+}
 ```
 
-Returns JSON: `source`, `state`, `signature`, `network`, `slot`, `blockTime`, `transfers[]`, `warnings[]`, `explorerUrl`. The `source` value `LIVE_RPC` means the HTTP server received a Solana RPC response; unit/integration tests label their simulated transport accordingly and do not prove live network connectivity. Invalid input → `400`, throttling → `429`, RPC failure → `503`.
+The API returns transaction state, provenance, transfers and related evidence. Input errors, rate limits and RPC failures have distinct error responses.
 
-## Limitations and threat model
+## Security & limitations
 
-Read [SECURITY.md](docs/SECURITY.md) before providing any real business data. Highlights:
+- **Read-only:** no wallet connection, private keys, signing, custody, transfers, or automatic refunds.
+- **Not audited:** do not use as a payment authorization, settlement, accounting, or legally conclusive dispute-resolution system.
+- **No provider integrations:** merchant/provider statuses are user-entered or imported and not independently authenticated.
+- **No identity proof:** a token transfer alone does not establish who paid or whether a merchant was credited.
+- **No shared database:** case data is held in the browser's `localStorage`; clearing browser data removes local case history.
+- **No confidential-data guarantees:** browser storage and unencrypted exports are unsuitable for sensitive production records.
+- **Scope:** parsed SPL token transfers; native SOL payments and unusual token/accounting flows are outside the current implementation.
+- **RPC dependency:** availability and historical results depend on the selected Solana RPC provider.
 
-- Not audited. Not for payment authorization, refunds, automatic crediting, accounting settlement or legally conclusive dispute resolution.
-- No client authentication, shared case database or server-side durable storage. localStorage is accessible to browser extensions/scripts and has no strong confidentiality or integrity guarantees.
-- No encrypted exports; exported JSON can include transaction and merchant context.
-- No direct payer identity verification. No automatic assignment of a transaction to an order without a trustworthy binding.
-- Mint metadata and branding are not verified. An SPL mint called "USDC" is not automatically real USDC.
-- Requires parsed SPL-token transfers; not native SOL, compressed token transfers, exotic token extensions or smart-contract-internal accounting claims.
-- RPC results depend on network and provider reliability. Multi-source RPC verification, retry queues, observability and operational auditing are future work.
+See [Security policy](docs/SECURITY.md), [Deployment notes](docs/DEPLOYMENT.md), and [Demo & pitch guide](docs/DEMO_AND_PITCH.md).
+
+## Roadmap
+
+**Future work, not current features:** authenticated merchant accounts, durable multi-tenant case storage, verified provider/webhook integrations, richer evidence trails, improved operational monitoring and production security review.
 
 ## License
 
-MIT. Created for the 2026 Colosseum Crypto World's Fair hackathon. This project does not claim endorsement by Colosseum or Solana.
+MIT — see [LICENSE](LICENSE).
+
+---
+
+<div align="center">
+
+**ChainCase · Verify the transfer. Explain the discrepancy.**
+
+*Built for Colosseum Crypto World's Fair 2026. Not affiliated with or endorsed by Colosseum or Solana.*
+
+</div>
