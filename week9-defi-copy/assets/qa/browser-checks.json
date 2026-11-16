@@ -1,0 +1,30 @@
+{
+  "checkedAt": "2026-10-09T18:50:31.359Z",
+  "checks": [
+    "overview fits 1440",
+    "form fits 1440",
+    "readable input 1440",
+    "result fits 1440",
+    "report fits 1440",
+    "table contained 1440",
+    "overview fits 1024",
+    "form fits 1024",
+    "readable input 1024",
+    "result fits 1024",
+    "report fits 1024",
+    "table contained 1024",
+    "overview fits 390",
+    "form fits 390",
+    "readable input 390",
+    "result fits 390",
+    "report fits 390",
+    "table contained 390",
+    "live transfer headline",
+    "live reconciliation result",
+    "live report has actual order",
+    "report visible in print",
+    "navigation hidden in print",
+    "No browser runtime exceptions"
+  ],
+  "errors": []
+}

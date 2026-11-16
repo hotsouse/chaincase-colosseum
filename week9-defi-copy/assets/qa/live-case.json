@@ -1,0 +1,39 @@
+{
+  "id": "69a4b319-d4f0-4151-9c3b-b35bde9cb354",
+  "merchantName": "Devnet verification",
+  "orderId": "ORDER-001",
+  "signature": "2KY1P44tBb7SPaCWuZcYHMbPfyzs4yNFsfRgEq83Ma7Tz7jVks6XNYmeh7NyBKgdRkrpX8nbMv4ScsokHEmsRcVe",
+  "network": "devnet",
+  "expectedAmount": "5",
+  "destination": "EqDkFinfZDw9VNNwZ3PhZjKGQXS8mgbqRJ4oZxCiXiB5",
+  "mint": "F5PfVvib1Skj7LZqNPP5ZWirdq4jaaG2Fz4fr37NVquq",
+  "merchantStatus": "PENDING",
+  "providerStatus": "PAID",
+  "note": "",
+  "createdAt": "2026-10-09T18:50:30.197Z",
+  "recordSource": "MANUALLY_ENTERED",
+  "demo": false,
+  "evidence": {
+    "state": "FINALIZED_SUCCESS",
+    "source": "LIVE_RPC",
+    "signature": "2KY1P44tBb7SPaCWuZcYHMbPfyzs4yNFsfRgEq83Ma7Tz7jVks6XNYmeh7NyBKgdRkrpX8nbMv4ScsokHEmsRcVe",
+    "network": "devnet",
+    "slot": 509239823,
+    "blockTime": 1791563480,
+    "transfers": [
+      {
+        "source": "GLsNdJPkRukaNdg3qqhob3y8tze9quov5XsYQYV1vH61",
+        "destination": "EqDkFinfZDw9VNNwZ3PhZjKGQXS8mgbqRJ4oZxCiXiB5",
+        "mint": "F5PfVvib1Skj7LZqNPP5ZWirdq4jaaG2Fz4fr37NVquq",
+        "decimals": 6,
+        "rawAmount": "5000000",
+        "parsedType": "transferChecked"
+      }
+    ],
+    "warnings": [],
+    "explorerUrl": "https://explorer.solana.com/tx/2KY1P44tBb7SPaCWuZcYHMbPfyzs4yNFsfRgEq83Ma7Tz7jVks6XNYmeh7NyBKgdRkrpX8nbMv4ScsokHEmsRcVe?cluster=devnet"
+  },
+  "updatedAt": "2026-10-09T18:50:30.598Z",
+  "lastVerificationError": null,
+  "verifiedAt": "2026-10-09T18:50:30.598Z"
+}
