@@ -139,13 +139,43 @@ export function analyzeCase(record, evidence, otherCases = []) {
 
 export function buildExport(record, result) {
   return {
+    caseId: record.id,
+    executiveSummary: investigationGuidance(record,result),
+    audit: { createdAt:record.createdAt, updatedAt:record.updatedAt, verifiedAt:record.verifiedAt, claimImportedAt:record.claimImportedAt, claimFileName:record.claimFileName, latestVerificationError:record.lastVerificationError||null },
     document: 'ChainCase payment investigation',
     version: '1.0',
     generatedAt: new Date().toISOString(),
     caution: 'Not a settlement certificate. User-provided offchain records have not been independently authenticated.',
     order: { orderId: record.orderId, merchantName: record.merchantName, expectedAmount: record.expectedAmount, destination: record.destination, mint: record.mint, network: record.network, signature: record.signature },
-    claims: { merchantStatus: normalizeStatus(record.merchantStatus), providerStatus: normalizeStatus(record.providerStatus), source: record.recordSource || 'MANUALLY_ENTERED' },
+    claims: { merchantStatus: normalizeStatus(record.merchantStatus), providerStatus: normalizeStatus(record.providerStatus), source: record.recordSource || 'MANUALLY_ENTERED', origins:record.claimOrigins||null },
     onchainEvidence: record.evidence || null,
     analysis: result,
   };
+}
+
+export function statusDescription(value) {
+  return {UNKNOWN:'No reliable external status is available.', PAID:'The external system reports that payment was completed.', FAILED:'The external system reports that payment failed.', PENDING:'The external system is still processing or awaiting payment.'}[normalizeStatus(value)];
+}
+
+export function investigationGuidance(record, result) {
+  const exact = result.verifiedTransfer && result.verifiedTransfer.actualAmount === result.verifiedTransfer.expectedAmount;
+  const simulated = result.dataOrigin === 'DEMO_SIMULATION';
+  const verified = exact && !simulated && result.dataOrigin === 'LIVE_RPC';
+  const merchant=normalizeStatus(record.merchantStatus), provider=normalizeStatus(record.providerStatus);
+  const order=String(record.orderId||'this order');
+  const transferLabel=exact ? result.verifiedTransfer.actualAmount+' tokens '+(simulated?'in simulated transfer':'verified on Solana '+record.network) : result.verifiedTransfer ? result.verifiedTransfer.actualAmount+' matching tokens observed; amount differs' : 'Expected token transfer not established';
+  let summary=exact ? (simulated?'This simulated scenario shows an expected token transfer.':'The blockchain confirms the expected token transfer to the specified account.')+' Merchant reports '+merchant.toLowerCase()+'; provider reports '+provider.toLowerCase()+'. Both external records are unauthenticated and provider settlement remains unverified.' : 'The expected payment has not been established. '+result.status.label+'. External records must be reviewed separately.';
+  let impact=verified ? 'The customer may have transferred tokens while the order still requires attention. Check internal records before changing the order or determining fulfillment. Provider settlement needs separate evidence.' : 'Avoid crediting or rejecting the order based on incomplete or conflicting evidence. Confirm the payment expectation and obtain supporting records.';
+  let nextSteps=[];
+  switch(result.status.code){
+    case 'MISMATCH': nextSteps=['Confirm the token mint, recipient token account and expected amount for '+order+'.','Compare the observed transfers with the invoice; investigate another transaction if needed.','Ask the merchant and provider to explain the mismatch before changing the order.'];break;
+    case 'ONCHAIN_FAILED': nextSteps=['Review the transaction execution error on Solana Explorer.','Request a different successful transaction if payment is claimed.','Check paid external claims against the provider ledger before crediting '+order+'.'];break;
+    case 'AWAITING_FINALITY': nextSteps=['Wait for finality and re-verify on the selected network.','Keep '+order+' under review until the expected transfer is established.'];break;
+    case 'INCONCLUSIVE': nextSteps=['Confirm the transaction signature and Solana network.','Retry verification when RPC is available; unavailable evidence does not mean payment failed.','Request missing order or transaction details before changing '+order+'.'];break;
+    case 'RECORDS_ALIGNED': nextSteps=['Retain the blockchain evidence and order-to-payment mapping for '+order+'.','Confirm the reported paid statuses against authenticated merchant and provider records.','Obtain provider settlement evidence before treating the case as settled.'];break;
+    default: nextSteps=['Check the merchant order record for '+order+' (reported '+merchant.toLowerCase()+').','Compare the order and expected amount with the saved blockchain transaction.',provider==='UNKNOWN'?'Request the missing provider payment status and settlement evidence.':'Request provider confirmation and settlement evidence for the reported '+provider.toLowerCase()+' status.','Determine whether the order should be updated after reviewing internal records.'];
+  }
+  if(result.findings.some(f=>f.title.includes('another case')))nextSteps.unshift('Review the other case using this signature before crediting multiple orders.');
+  nextSteps.push('Export this evidence report for the finance or support team.');
+  return {transferLabel, summary, impact, nextSteps};
 }

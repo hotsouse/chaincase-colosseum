@@ -58,3 +58,7 @@ test('no finalized transaction but confirmation exists: pending',async()=>{
 test('RPC outage gets safe 503 error',async()=>{
   await assert.rejects(()=>verifyTransaction({signature:sig,network:'devnet'},{rpcUrl:'http://mock.local',fetcher:async()=>{throw Error('network secret');}}),e=>e.status===503 && !e.message.includes('secret'));
 });
+
+test('RPC HTTP rate limit does not produce payment evidence',async()=>{await assert.rejects(()=>verifyTransaction({signature:sig,network:'devnet'},{fetcher:async()=>({ok:false,status:429})}),e=>e.status===503);});
+test('RPC timeout gives a retryable result without leaking internals',async()=>{await assert.rejects(()=>verifyTransaction({signature:sig,network:'devnet'},{fetcher:async()=>{throw Object.assign(new Error('timeout'),{name:'AbortError'});}}),e=>e.status===503&&/timed out/.test(e.message));});
+test('RPC JSON error never becomes successful evidence',async()=>{await assert.rejects(()=>verifyTransaction({signature:sig,network:'devnet'},{fetcher:async()=>({ok:true,json:async()=>({error:{code:-32005,message:'secret'}})})}),e=>e.status===503&&!e.message.includes('secret'));});

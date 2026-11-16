@@ -1,42 +1,25 @@
-# ChainCase engineering progress tracker
+# ChainCase — Week 9 project status
 
-**Snapshot:** 9 October 2026 · MVP v0.1.0
+**Snapshot:** Reconstructed Week 9 DeFi version, verified 16 November 2026.
 
-## Completed in this build
+## Included Week 9 work
 
-- Product boundary set: independent Solana payment investigations, no movement of funds.
-- Node HTTP server and static UI.
-- Solana RPC verification with finalized commitment, transaction failure handling, strict base58 signature decoding and parsed SPL transfers.
-- Pure deterministic engine for expected amount, token mint, destination and offchain claims.
-- Responsive dashboard, real-case form, investigations directory and case tabs.
-- Browser-local persistence, duplicate-signature warning, status update controls.
-- CSV parser/import, template export, evidence JSON export and printable report.
-- Clearly labeled demo cases, including conflict, underpayment and aligned scenarios.
-- Core test suites, mocked transport integration, frontend module initialization and HTTP smoke checks.
-- Setup, architecture, threat model, pitch video storyboard, deployment and audit documentation.
+- Existing ChainCase payment investigations and finalized Solana RPC verification.
+- Exact SPL token mint, recipient token account and raw amount checks.
+- Browser-local case history, CSV/JSON claims, evidence export and printable report.
+- Jupiter Swap API V2 quote-only integration for exact, verified mainnet transfers.
+- Server-side transaction re-verification before quoting; no wallet signing, custody or swap execution.
+- Week 9 documentation and laboratory report.
 
-## Verified here
+## Verification performed in this copy
 
-- Automated test suite: **33/33 passed** at most recent run.
-- HTTP routes and required static assets: smoke script completed successfully.
-- JavaScript entry modules: syntax checks passed.
-- Network-backed real Solana verification: **not tested**, because outbound RPC is inaccessible from this workspace.
-- Actual browser rendering and interaction: **not tested**; attempted Chromium screenshot timed out in this environment. Browser bootstrap module test did pass.
+- `npm test`: **59 passed, 0 failed**. RPC and Jupiter responses are mocked in these tests.
+- `npm run smoke`: **passed** for local routes and invalid transaction handling.
+- JavaScript syntax checks: **passed** for `public/app.js`, `server/index.js`, `server/jupiter.js` and `tests/jupiter.test.js`.
+- `npm start`: launched; local `/` and `/api/health` returned HTTP 200.
+- Week 10 analytics endpoint and dashboard stylesheet checks returned 404, as expected after removal.
+- Live Solana RPC, live Jupiter quote and manual browser rendering were not tested.
 
-## Open issues and external blockers
+## Reconstruction provenance
 
-- Need real Solana Devnet SPL transfer and actual cluster verification from the user's computer/network.
-- Need manual browser QA on Windows/WSL and mobile-sized browser window.
-- Need user-owned GitHub remote for publishing the repository.
-- Need a Node-hosting deployment account/credentials to create a live public URL.
-- Need original demo video and Colosseum portal submission.
-- Need 10 merchant interviews; willingness to pay, frequencies and revenue remain unvalidated.
-- Production requires authentication, signed PSP integrations, durable server storage and independent security evaluation.
-
-## Files changed
-
-See README.md structure. All source and docs are in the delivered ZIP. No user's local files or GitHub repositories were modified.
-
-## Immediate next engineering action
-
-Unzip, `npm test`, `npm start`, open `http://localhost:3000`, use a genuine finalized Devnet SPL-token transaction, and confirm the end-to-end verification UI in the user's browser. Fix any real browser issues before recording the submission video.
+A standalone historical pre-Week-10 source snapshot was not available in Git history. This copy was reconstructed from the existing ChainCase application and the retained Week 9 Jupiter implementation/report. Week 10-only dashboard handlers, analytics endpoints, tests, styles, reports and screenshots were removed here. The original Week 9 + Week 10 project was kept separate and unchanged.

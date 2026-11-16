@@ -7,7 +7,7 @@ test('browser module renders overview using a minimal DOM shell',async()=>{
   globalThis.localStorage={getItem:()=>null,setItem:()=>{}};
   globalThis.window={scrollTo:()=>{}};
   await import('../public/app.js');
-  assert.match(html,/Every payment has a story/);
+  assert.match(html,/When payment systems disagree/);
   assert.match(html,/Recent investigations/);
   assert.match(html,/SIMULATION|Explore sample case/);
   for(const key of ['click','submit','change','input','keydown'])assert.equal(typeof handlers[key],'function');

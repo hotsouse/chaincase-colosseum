@@ -3,12 +3,15 @@ import { readFile, stat } from 'node:fs/promises';
 import { resolve, extname, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { verifyTransaction } from './rpc.js';
+import { getJupiterQuote, validateQuoteInput } from './jupiter.js';
 
 const root = resolve(fileURLToPath(new URL('../', import.meta.url)));
 const assets = resolve(root, 'public');
 const types = { '.html':'text/html; charset=utf-8', '.css':'text/css; charset=utf-8', '.js':'text/javascript; charset=utf-8', '.svg':'image/svg+xml', '.json':'application/json' };
 const attempts = new Map();
 const RATE_WINDOW = 60_000;
+const JUPITER_COOLDOWN = 2_000;
+let lastJupiterRequestAt = 0;
 
 function response(res, status, body, extra = {}) {
   const base = {
@@ -32,11 +35,24 @@ async function parseBody(req) {
   catch { throw Object.assign(new Error('Invalid JSON'), { status:400 }); }
 }
 
-export function createAppServer() {
+export function createAppServer({ quoteJupiter = getJupiterQuote, verify = verifyTransaction, jupiterCooldownMs = JUPITER_COOLDOWN } = {}) {
   return createServer(async (req, res) => {
     try {
       const path = new URL(req.url || '/', 'http://localhost').pathname;
       if (path === '/api/health' && req.method === 'GET') return json(res, 200, { ok: true, product: 'ChainCase', persistence: 'browser-local', solana: 'read-only' });
+      if (path === '/api/defi/quote' && req.method === 'POST') {
+        const input = validateQuoteInput(await parseBody(req));
+        const now = Date.now();
+        if (now - lastJupiterRequestAt < jupiterCooldownMs) return json(res, 429, { error: 'Jupiter quote limit reached; retry in two seconds' });
+        lastJupiterRequestAt = now;
+        const evidence = await verify({ signature: input.signature, network: input.network });
+        if (evidence.source !== 'LIVE_RPC' || evidence.state !== 'FINALIZED_SUCCESS') return json(res, 409, { error: 'A successful finalized live mainnet transaction is required for a quote' });
+        const matching = (evidence.transfers || []).filter(t => t.mint === input.mint && t.destination === input.destination && /^\d+$/.test(String(t.rawAmount)));
+        const verifiedAmount = matching.reduce((sum, t) => sum + BigInt(t.rawAmount), 0n).toString();
+        if (!matching.length || verifiedAmount !== input.amount) return json(res, 409, { error: 'Requested mint, destination and amount do not match the live transaction' });
+        const quote = await quoteJupiter(input);
+        return json(res, 200, quote);
+      }
       if (path === '/api/verify' && req.method === 'POST') {
         const ip = req.socket.remoteAddress || 'unknown';
         const now = Date.now();
